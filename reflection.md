@@ -328,10 +328,15 @@ Evaluate → Analyze → Improve → Augment benchmark → Repeat
 
 **Điều gì trong kết quả benchmark trái với dự đoán ban đầu của bạn?**
 
-> *Câu trả lời:* _[Phần này cần bạn tự viết vì nó là dự đoán của riêng bạn trước khi chạy benchmark.]_
-> Một số dữ kiện từ benchmark bạn có thể dùng làm điểm xuất phát: (a) pass rate chỉ 30% dù đọc câu trả lời thấy nhiều case đúng;
-> (b) hệ thống từ chối đúng cả hai case tấn công A01 và A02 nhưng vẫn bị chấm gần thấp nhất; (c) retrieval tốt hơn generation
-> ở hầu hết nhóm (Recall 0.814 so với Completeness 0.575); (d) chỉ tăng `top_k` cứu được A03 nhưng không cứu được A01.
+> *Câu trả lời:* Trước khi đọc trace, tôi mặc định hai điều: điểm thấp nghĩa là câu trả lời sai, và những case tồi nhất sẽ là các câu
+> sai thật. Kết quả trái với cả hai. (1) Pass rate chỉ 30%, nhưng khi đọc answer thì ít nhất 6 trong 14 case fail (E02, E05, M02,
+> M06, M07, A02) có nội dung đúng, chỉ khác cách diễn đạt so với expected answer. (2) Case điểm thấp nhất là A01 (0.182) lại là một
+> lời từ chối đúng, còn A02 (0.411), cũng là lời từ chối đúng và có retrieval tốt nhất (gold chunk hạng 1, score 31.3), vẫn thấp hơn H01 (0.473),
+> nơi câu trả lời ghi sai hạn trả (18/9 thay vì 24/9). Nghĩa là thứ hạng điểm không phản ánh mức độ nghiêm trọng của lỗi. (3) Tôi cho rằng
+> vấn đề nằm ở retrieval, nhưng với easy/medium/hard Recall vẫn 0.83–0.94 còn Completeness giảm xuống 0.389 ở nhóm hard, tức là
+> evidence đã có mà answer không dùng hết; và chỉ tăng `top_k` cũng không đủ, vì nó cứu được A03 (Recall 0.327 → 0.596)
+> nhưng gần như không đổi với A01 (0.263 → 0.342). Điều duy nhất đúng như dự đoán là điểm giảm đều theo độ khó (0.728, 0.627, 0.483, 0.321),
+> xác nhận việc phân tầng dataset có tác dụng.
 
 **Word-overlap heuristics trong lab có giới hạn gì? Nếu đưa hệ thống vào
 production, bạn sẽ thay hoặc bổ sung metric nào?**
