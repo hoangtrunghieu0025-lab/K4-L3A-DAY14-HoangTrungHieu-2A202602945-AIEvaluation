@@ -296,22 +296,26 @@ thay đổi Context Recall hay không.
 4. Rerank cùng tập chunks, không thêm hoặc xóa chunk.
 5. Tính lại hai metrics và giải thích kết quả.
 
+**Cách làm.** `rerank_by_overlap(chunks, question)` trong `template.py` sắp xếp lại đúng tập chunk mà retriever đã lấy (top-5) theo số token nội dung chung với **câu hỏi**; chunk cùng điểm giữ thứ tự cũ. Tôi chạy trên cả 20 trace trong `artifacts/actual_answers.json`, kiểm tra bằng `assert` rằng trước và sau là cùng một tập chunk, rồi tính Context Recall/Precision so với `expected_answer` như `evaluate_answers.py`. Query là câu hỏi chứ không phải expected answer: hệ thống thật không biết đáp án lúc chạy, và thử rerank bằng expected answer cho Precision = 1.000 ở cả 20 case, một kết quả vô nghĩa do gold leakage. Năm case dưới đây được chọn theo tiêu chí có sẵn từ trước là **Precision before thấp nhất** (nhiều dư địa cải thiện nhất), không chọn theo kết quả, và có cả một case bị xấu đi.
+
 | ID | Recall before | Recall after | Precision before | Precision after | Delta Precision |
 |---|---:|---:|---:|---:|---:|
-| | | | | | |
-| | | | | | |
-| | | | | | |
-| | | | | | |
-| | | | | | |
-| **Avg** | | | | | |
+| A01 | 0.263 | 0.263 | 0.333 | 0.200 | -0.133 |
+| A03 | 0.327 | 0.327 | 0.583 | 1.000 | +0.417 |
+| M04 | 0.781 | 0.781 | 0.756 | 0.917 | +0.161 |
+| M02 | 0.708 | 0.708 | 0.833 | 1.000 | +0.167 |
+| M01 | 0.681 | 0.681 | 0.867 | 1.000 | +0.133 |
+| **Avg (5 case)** | 0.552 | 0.552 | 0.674 | 0.823 | +0.149 |
+
+**Kết quả trên cả 20 case:** Precision trung bình 0.899 → 0.943 (+0.043), Recall 0.814 → 0.814 (không đổi ở cả 20 case). Precision tăng ở 6 case (M01, M02, M04, H02, H05, A03), giảm ở 1 case (A01) và giữ nguyên ở 13 case. Sau khi implement, `pytest tests/ -v` cho 42 passed (test reranking không còn bị skip).
 
 **Tại sao Recall dự kiến không đổi?**
 
-> *Câu trả lời:*
+> *Câu trả lời:* Context Recall được tính trên **hợp** (union) token của tất cả chunk đã lấy so với expected answer. Reranking chỉ đổi thứ tự mà không thêm hay bỏ chunk nào, nên hợp token không đổi và Recall bằng nhau. Kết quả xác nhận điều này: Recall trước và sau giống hệt ở 20/20 case. Ngược lại Context Precision là Average Precision có xét thứ hạng nên đổi khi chunk relevant được đưa lên đầu, ví dụ A03 tăng từ 0.583 lên 1.000 vì hai chunk relevant (`03`, `05`) vốn ở hạng 2 và 3 được đưa lên hạng 1 và 2.
 
 **Khi nào reranking không đủ và cần sửa retriever/query/chunking?**
 
-> *Câu trả lời:*
+> *Câu trả lời:* Reranking chỉ sắp xếp lại những gì đã lấy về, nên không đủ khi vấn đề nằm ở chỗ chunk cần thiết chưa được lấy. (1) **Gold chunk không nằm trong tập đã lấy:** A01 giữ nguyên Recall 0.263, và ở A03 Precision lên 1.000 nhưng Recall vẫn 0.327 vì chunk phiên bản chính sách của `09` đứng hạng 9, ngoài top-5, nên câu trả lời sai vẫn sai. Cần sửa retriever (tăng `top_k`, hybrid hoặc dense retrieval, query expansion, luôn kèm chunk scope). (2) **Câu hỏi nhiều bước:** M01 cần chunk return process nhưng câu hỏi không có từ "return", nên phải viết lại hoặc tách query. (3) **Chunking:** chunk dài chứa nhiều ý bị BM25 chuẩn hóa độ dài kéo điểm xuống, nên nên chia nhỏ hơn. (4) **Tín hiệu trùng lặp:** reranker này dùng cùng loại tín hiệu từ vựng với BM25 nên 13/20 case không đổi. Cần lưu ý thêm rằng ở A01 Precision giảm (0.333 → 0.200) vì reranker hạ xuống cuối chunk `07`, chunk duy nhất bị metric coi là relevant (chỉ trùng vài từ chung với expected answer, không trùng từ nào với câu hỏi); ở đây reranker làm đúng và nhiễu nằm ở tín hiệu relevance của metric. Cuối cùng, tôi chỉ đo Recall/Precision mà chưa chạy lại generation, nên chưa chứng minh được chất lượng câu trả lời tốt hơn.
 
 ---
 
