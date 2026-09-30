@@ -1,0 +1,125 @@
+{
+  "model": "gpt-4o-mini",
+  "scores": {
+    "E01": {
+      "faithfulness": 0.75,
+      "answer_relevancy": 0.7863789687679766,
+      "context_recall": 1.0,
+      "llm_context_precision_with_reference": 0.9999999999
+    },
+    "E02": {
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_recall": 1.0,
+      "llm_context_precision_with_reference": 0.499999999975
+    },
+    "E03": {
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9409606187821243,
+      "context_recall": 1.0,
+      "llm_context_precision_with_reference": 0.9999999999
+    },
+    "E04": {
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9722960564862957,
+      "context_recall": 1.0,
+      "llm_context_precision_with_reference": 0.9999999999
+    },
+    "E05": {
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.925336879654688,
+      "context_recall": 1.0,
+      "llm_context_precision_with_reference": 0.9999999999
+    },
+    "M01": {
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_recall": 0.6666666666666666,
+      "llm_context_precision_with_reference": 0.8666666666377778
+    },
+    "M02": {
+      "faithfulness": 0.6666666666666666,
+      "answer_relevancy": 0.8052732796587172,
+      "context_recall": 1.0,
+      "llm_context_precision_with_reference": 0.9999999999
+    },
+    "M03": {
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.914609397822218,
+      "context_recall": 1.0,
+      "llm_context_precision_with_reference": 0.8055555555287036
+    },
+    "M04": {
+      "faithfulness": 0.6666666666666666,
+      "answer_relevancy": 0.8174196469916519,
+      "context_recall": 0.6666666666666666,
+      "llm_context_precision_with_reference": 0.9999999999666667
+    },
+    "M05": {
+      "faithfulness": 0.6666666666666666,
+      "answer_relevancy": 0.6951539879858258,
+      "context_recall": 1.0,
+      "llm_context_precision_with_reference": 0.99999999995
+    },
+    "M06": {
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9159053241822761,
+      "context_recall": 1.0,
+      "llm_context_precision_with_reference": 0.9166666666361111
+    },
+    "M07": {
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.8319414676540681,
+      "context_recall": 1.0,
+      "llm_context_precision_with_reference": 0.99999999995
+    },
+    "H01": {
+      "faithfulness": 0.6,
+      "answer_relevancy": 0.7234408524515853,
+      "context_recall": 0.6666666666666666,
+      "llm_context_precision_with_reference": 0.99999999998
+    },
+    "H02": {
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.7039568018611203,
+      "context_recall": 1.0,
+      "llm_context_precision_with_reference": 0.8874999999778125
+    },
+    "H03": {
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7633135205333729,
+      "context_recall": 0.6666666666666666,
+      "llm_context_precision_with_reference": 0.99999999998
+    },
+    "H04": {
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7099106489695244,
+      "context_recall": 1.0,
+      "llm_context_precision_with_reference": 0.999999999975
+    },
+    "H05": {
+      "faithfulness": 0.8333333333333334,
+      "answer_relevancy": 0.7050977504327064,
+      "context_recall": 0.75,
+      "llm_context_precision_with_reference": 0.8874999999778125
+    },
+    "A01": {
+      "faithfulness": 0.4,
+      "answer_relevancy": 0.0,
+      "context_recall": 1.0,
+      "llm_context_precision_with_reference": 0.9999999999
+    },
+    "A02": {
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_recall": 1.0,
+      "llm_context_precision_with_reference": 0.99999999998
+    },
+    "A03": {
+      "faithfulness": 0.3333333333333333,
+      "answer_relevancy": 0.0,
+      "context_recall": 0.75,
+      "llm_context_precision_with_reference": 0.5833333333041666
+    }
+  }
+}

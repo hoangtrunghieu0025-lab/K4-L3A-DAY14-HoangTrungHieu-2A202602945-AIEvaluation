@@ -271,19 +271,38 @@ verbosity bias và self-preference bằng cách nào?
 Chỉ làm sau khi hoàn thành 3.1–3.3. Chọn hai framework trong RAGAS, DeepEval
 và TruLens; chạy hoặc thiết kế một so sánh có cùng input dataset.
 
-| Tiêu chí | Framework 1: ____ | Framework 2: ____ |
+| Tiêu chí | Framework 1: RAGAS 0.4.3 | Framework 2: DeepEval 4.2.7 |
 |---|---|---|
-| Setup complexity | | |
-| Metrics available | | |
-| CI/CD integration | | |
-| Kết quả trên cùng dataset | | |
-| Insight rút ra | | |
+| Setup complexity | Khó hơn. `pip install ragas` xong nhưng `import ragas` lỗi vì `langchain-community` mới đã bỏ module `vertexai` mà ragas còn import; tôi phải tạo venv riêng và ghim `langchain-community<0.4`. API thay đổi nhiều (lớp metric cũ báo deprecated, LLM và embedding phải bọc qua langchain). Sau đó một lệnh `evaluate()` chấm cả batch. | Dễ hơn. `pip install deepeval` chạy ngay; chỉ cần `LLMTestCase` và `metric.measure()`. Nhược điểm: chấm tuần tự rất chậm nên phải chạy 5 luồng, và 8/80 ô điểm gặp `APIConnectionError` ngẫu nhiên nên phải chạy lại riêng các ô đó. |
+| Metrics available | Khoảng 50 lớp metric, tập trung vào RAG: Faithfulness, ResponseRelevancy, LLMContextRecall, LLMContextPrecision (có và không có reference), biến thể không dùng LLM (dựa trên ID hoặc chuỗi), multimodal. | 53 lớp Metric: bộ RAG (Faithfulness, AnswerRelevancy, ContextualRecall/Precision/Relevancy) cộng HallucinationMetric, PIILeakageMetric, MisuseMetric, NonAdviceMetric, ExactMatchMetric, PatternMatchMetric, ToxicityMetric và metric cho agent/hội thoại. Tôi chưa thử các metric safety, nhưng chúng đúng loại kiểm tra mà case adversarial cần. |
+| CI/CD integration | `evaluate()` trả về điểm; theo những gì tôi thấy không có test runner riêng, nên phải tự viết ngưỡng và assert (ví dụ trong pytest). Chưa thử trong CI. | Có `assert_test()` và `deepeval test run` để dùng trong pytest/CI với ngưỡng `threshold` cho từng metric. Tôi xác nhận `assert_test` import được nhưng chưa chạy trong pipeline CI. |
+| Kết quả trên cùng dataset | Cùng 20 case, cùng judge `gpt-4o-mini`. Trung bình: Faithfulness 0.771, Answer Relevancy 0.611, Context Recall 0.908, Context Precision 0.922. 11/20 case có min(Faithfulness, Relevancy) < 0.7. | Trung bình: Faithfulness 0.876, Answer Relevancy 0.795, Context Recall 0.890, Context Precision 0.887. 9/20 case có min(Faithfulness, Relevancy) < 0.7. |
+| Insight rút ra | Khắt khe hơn DeepEval ở câu trả lời. Answer Relevancy về 0 khi câu trả lời bị coi là "noncommittal", nên phạt cả câu rào đón đúng (E02) lẫn lời từ chối đúng (A02). Retrieval metric bị đánh lừa ở A01 (Recall 1.00 dù không lấy về chunk scope). | Dễ tính hơn ở câu trả lời (tính cả verdict `BORDERLINE` là đạt) và chỉ ra đúng lỗi retrieval của A01 (Recall 0.29, Precision 0.00). Vẫn chấm A02 (từ chối đúng) Relevancy 0.0. Dễ đưa vào CI hơn. |
+
+**Điểm trung bình trên 20 case và độ đồng thuận giữa hai framework**
+
+| Metric | `template.py` | RAGAS | DeepEval | Spearman (RAGAS ↔ DeepEval) | Sai lệch tuyệt đối TB |
+|---|---:|---:|---:|---:|---:|
+| Faithfulness | 0.607 | 0.771 | 0.876 | +0.57 | 0.175 |
+| Relevance / Answer Relevancy | 0.530 | 0.611 | 0.795 | +0.30 | 0.269 |
+| Context Recall | 0.814 | 0.908 | 0.890 | −0.16 | 0.177 |
+| Context Precision | 0.899 | 0.922 | 0.887 | +0.23 | 0.098 |
+
+Đầu vào giống hệt cho cả hai framework: câu hỏi, câu trả lời thật, 5 chunk retrieved theo thứ tự xếp hạng và expected answer.
+Script, điểm thô và cách chạy lại nằm trong `experiments/ex3_4_framework_comparison/` (`compare.py` in lại toàn bộ số liệu bên dưới).
 
 - Scores có nhất quán không?
 - Framework nào strict hơn và vì sao?
 - Hai framework có tìm ra cùng failure cases không?
 
 > *Phân tích:*
+> **Scores có nhất quán không?** Không. Về mức điểm, hai framework lệch nhau trung bình 0.10–0.27; về thứ hạng, Spearman chỉ +0.57 cho Faithfulness, +0.30 cho Relevancy, +0.23 cho Precision và −0.16 cho Context Recall (nghĩa là với Recall, framework này cho điểm cao thì framework kia không nhất thiết cao). Cần thận trọng khi đọc: n = 20 và nhiều điểm bằng 1.0 nên Spearman rất thô. Cả hai đều cho Context Recall cao hơn heuristic của lab (0.89–0.91 so với 0.814).
+>
+> **Framework nào strict hơn và vì sao?** Thứ tự khắt khe là `template.py` > RAGAS > DeepEval: Faithfulness 0.607 / 0.771 / 0.876 và Relevance 0.530 / 0.611 / 0.795. Heuristic của lab khắt khe nhất vì đo trùng từ nên phạt cả câu diễn đạt lại. Giữa hai framework, tôi xác minh trong mã nguồn hai nguyên nhân: (1) RAGAS tính Answer Relevancy bằng độ tương đồng cosine trung bình giữa câu hỏi gốc và các câu hỏi sinh ra từ câu trả lời, rồi **nhân với 0 nếu tất cả câu hỏi sinh ra bị gắn nhãn noncommittal**. Trong lần chạy này log ghi 13 lần "LLM returned 1 generations instead of requested 3" (model chỉ sinh 1 câu hỏi thay vì 3), nên ở các mẫu đó một cờ noncommittal là đủ để điểm về 0; kết quả là Relevancy = 0.0 ở E02, M01, A01, A02 và A03. (2) DeepEval tính cả verdict `BORDERLINE` là đạt (`passing=(YES, BORDERLINE)`), nên dễ tính hơn.
+>
+> **Hai framework có tìm ra cùng failure cases không?** Chỉ một phần. Với quy tắc min(Faithfulness, Relevancy) < 0.7, RAGAS đánh dấu 11 case, DeepEval 9 case, trùng nhau 6 (A01, A02, A03, H01, H02, M05), Jaccard 0.43; RAGAS-only là E02, M01, M02, M04, M07 và DeepEval-only là E03, E04, M03. Cả ba bộ chấm (kể cả `template.py`) đều xếp A03 trong hai case tệ nhất. Hai framework cùng đánh dấu H01 và H02, đúng là hai case có lỗi thật (H01 ghi sai hạn trả 18/9 thay vì 24/9, H02 bỏ sót chi tiết); ở H01 Faithfulness chỉ 0.60 (RAGAS) và 0.40 (DeepEval), một tín hiệu cụ thể mà metric trùng từ không tách ra được.
+>
+> **Insight đối chiếu với `reflection.md`.** (1) Kết luận Cluster 1 (phép đo phạt oan câu đúng) được ủng hộ: DeepEval chấm E02, E05, M02, M06, M07 đều ≥ 0.75 ở cả hai answer metric (5/6 case), RAGAS chấm E05 và M06 cao (Relevancy ≥ 0.91, Faithfulness 1.0) nhưng vẫn đánh dấu E02 và A02 vì lỗi noncommittal ở trên. (2) Không framework nào xử lý được lời từ chối: A02 có Answer Relevancy 0.0 ở cả hai, nên với case adversarial vẫn cần judge chấm hành vi hoặc kiểm tra tất định như đã đề xuất. (3) LLM-judge cũng có thể bị đánh lừa ở retrieval: RAGAS cho A01 Context Recall 1.00 và Precision 1.00 dù chunk scope chưa từng được lấy về (expected answer mô tả một hành vi nên LLM gán được vào chunk gần nghĩa), trong khi DeepEval (0.29 / 0.00) và `template.py` (0.263 / 0.333) phát hiện đúng lỗi này. (4) Giới hạn của thí nghiệm: một lần chạy, n = 20, judge là `gpt-4o-mini` cũng là model sinh câu trả lời nên có nguy cơ self-preference, và cấu hình RAGAS bị suy giảm vì nhiều mẫu chỉ sinh 1 câu hỏi thay vì 3. Kết luận thực tế: dùng DeepEval cho CI và các kiểm tra safety/PII, dùng metric retrieval dựa trên ID hoặc chuỗi khi có gold chunk, và không tin vào một framework duy nhất.
 
 ### Exercise 3.5 — Retrieval Reranking (Bonus +5)
 
@@ -336,4 +355,4 @@ Hoàn thành kiểm tra cuối trong khoảng 16:50–17:00.
 - [x] Exercise 3.3 có rubric 1–5 và bias controls.
 - [x] `reflection.md` có ba failure analyses và regression strategy.
 - [x] Đã copy `template.py` thành `solution/solution.py`.
-- [ ] Exercise 3.4 và 3.5 chỉ làm nếu chọn bonus.
+- [x] Exercise 3.4 và 3.5 chỉ làm nếu chọn bonus.
